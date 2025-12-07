@@ -3,6 +3,7 @@ const express = require("express");
 const transactionRoutes = require("./routes/transactionRoutes");
 const analytics = require("./utils/analytics");
 const errorHandler = require("./middleware/errorHandler");
+const logger = require("./middleware/logger");
 
 
 const app = express();
@@ -11,11 +12,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
+  if (process.env.NODE_ENV === "test") {
+    res.pretty = (data) => res.json(data);
+    return next();
+  }
+
   res.pretty = (data) => {
+    res.setHeader("Content-Type", "application/json");
     res.send(JSON.stringify(data, null, 2));
   };
   next();
 });
+app.use(logger);
 
 // Transaction routes
 app.use("/transactions", transactionRoutes);
